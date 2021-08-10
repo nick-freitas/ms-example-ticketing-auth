@@ -4,22 +4,25 @@ import {
   Controller,
   Get,
   Post,
+  UseGuards,
+  Request,
+  Response,
+  Res,
 } from '@nestjs/common';
 import { AppService } from './app.service';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { LocalAuthGuard } from './guards/local-auth.guard';
+import { User, UserDocument } from './schema/user.schema';
 import { CreateUserDto } from './validators/create-user-dto.validator';
 
 @Controller('api/users')
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @Get()
-  getHello(): string {
-    return this.appService.getHello();
-  }
-
-  @Get('currentuser')
-  getCurrentUser(): string {
-    return this.appService.getCurrentUser();
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  getProfile(@Request() req) {
+    return req.user;
   }
 
   @Post('signup')
@@ -31,9 +34,13 @@ export class AppController {
     return this.appService.signUp(email, password);
   }
 
+  @UseGuards(LocalAuthGuard)
   @Post('signin')
-  signIn(): any {
-    return this.appService.signIn();
+  signIn(@Request() req, @Res({ passthrough: true }) response: Response): any {
+    const { access_token } = this.appService.signIn(req.user);
+    (response as any)?.cookie('access_token', access_token);
+
+    return { access_token };
   }
 
   @Post('signout')

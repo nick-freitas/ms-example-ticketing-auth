@@ -33,8 +33,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
       responseObject = {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         error: {
-          name: 'Internal Server Error',
-          message: 'Something went wrong',
+          // name: 'Internal Server Error',
+          // message: 'Something went wrong',
+          name: (exception as HttpException)?.name,
+          message: (exception as HttpException)?.message,
         },
       };
     }

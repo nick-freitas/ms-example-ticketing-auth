@@ -1,11 +1,13 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Schema } from 'mongoose';
+import { PassportModule } from '@nestjs/passport';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
-import { userPreSave } from './schema/user.pre-save';
 import { User, UserSchema } from './schema/user.schema';
+import { JwtStrategy } from './strategy/jwt.strategy';
+import { LocalStrategy } from './strategy/local.strategy';
 
 @Module({
   imports: [
@@ -17,19 +19,20 @@ import { User, UserSchema } from './schema/user.schema';
     MongooseModule.forFeature([
       {
         name: User.name,
-        useFactory: () => {
-          const schema = UserSchema;
-          schema.pre('save', userPreSave);
-          return schema;
-        },
+        schema: UserSchema,
       },
     ]),
+    PassportModule,
+    JwtModule.register({
+      secret: 'qwerty',
+      signOptions: { expiresIn: '60s' },
+    }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, LocalStrategy, JwtStrategy],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(LoggerMiddleware);
+    consumer.apply(LoggerMiddleware).forRoutes('*');
   }
 }
