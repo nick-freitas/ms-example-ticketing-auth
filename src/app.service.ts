@@ -3,6 +3,7 @@ import { Model } from 'mongoose';
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -16,15 +17,30 @@ export class AppService {
     private jwtService: JwtService,
   ) {}
 
-  async signUp(email: string, password: string): Promise<any> {
+  async getCurrentUser(id: string): Promise<UserDocument> {
+    const user: UserDocument = await this.userModel.findById(id, {
+      email: 1,
+      id: 1,
+    });
+
+    return user;
+  }
+
+  async signUp(
+    email: string,
+    password: string,
+  ): Promise<{ access_token: string }> {
     const existingUser = await this.userModel.findOne({ email });
     if (existingUser) {
       throw new BadRequestException('Email is already in use');
     }
 
     const user = await this.userModel.create({ email, password });
+    if (!user) {
+      throw new InternalServerErrorException('Could not create user');
+    }
 
-    return user;
+    return this.signIn(await this.validateUser(email, password));
   }
 
   signIn(user: UserDocument): { access_token: string } {

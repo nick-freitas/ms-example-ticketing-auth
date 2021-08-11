@@ -12,7 +12,6 @@ import {
 import { AppService } from './app.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { LocalAuthGuard } from './guards/local-auth.guard';
-import { User, UserDocument } from './schema/user.schema';
 import { CreateUserDto } from './validators/create-user-dto.validator';
 
 @Controller('api/users')
@@ -22,16 +21,24 @@ export class AppController {
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   getProfile(@Request() req) {
-    return req.user;
+    console.log(req?.user);
+    if (!req?.user?.userId) throw new BadRequestException('No userId present');
+    return this.appService.getCurrentUser(req?.user?.userId);
   }
 
   @Post('signup')
-  signUp(@Body() createUserDto: CreateUserDto): any {
+  async signUp(
+    @Body() createUserDto: CreateUserDto,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<any> {
     const { email, password } = createUserDto;
     if (!email || !password)
       throw new BadRequestException('email or password is not defined');
 
-    return this.appService.signUp(email, password);
+    const { access_token } = await this.appService.signUp(email, password);
+    (response as any)?.cookie('access_token', access_token);
+
+    return { access_token };
   }
 
   @UseGuards(LocalAuthGuard)
