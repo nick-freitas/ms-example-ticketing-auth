@@ -24,7 +24,7 @@ import { LocalStrategy } from './strategy/local.strategy';
     ]),
     PassportModule,
     JwtModule.register({
-      secret: 'qwerty',
+      secret: process.env.JWT_SECRET_KEY,
       signOptions: { expiresIn: '5m' },
     }),
   ],

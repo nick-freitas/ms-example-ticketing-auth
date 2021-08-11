@@ -14,9 +14,16 @@ async function bootstrap() {
 
   app.use(morgan('tiny'));
   app.use(cookieParser());
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+    }),
+  );
   app.useGlobalFilters(new HttpExceptionFilter());
   // app.useGlobalFilters(new AllExceptionsFilter());
+
+  if (!process.env.JWT_SECRET_KEY)
+    throw new Error('env var JWT_SECRET_KEY must be defined');
 
   await app.listen(port);
   console.log(`Listening on port ${port}`);

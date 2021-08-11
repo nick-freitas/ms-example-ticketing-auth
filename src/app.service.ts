@@ -18,12 +18,7 @@ export class AppService {
   ) {}
 
   async getCurrentUser(id: string): Promise<UserDocument> {
-    const user: UserDocument = await this.userModel.findById(id, {
-      email: 1,
-      id: 1,
-    });
-
-    return user;
+    return this.userModel.findById(id);
   }
 
   async signUp(
